@@ -1,7 +1,7 @@
 // oauth integration
 const GoogleStrategy = require("passport-google-oauth").OAuth2Strategy;
 
-const { client_id, client_secret, redirect_uris } = require("./config").web;
+const { client_id, client_secret, redirect_uri } = require("./config").web;
 
 module.exports = (passport) => {
   passport.serializeUser((user, done) => {
@@ -15,7 +15,7 @@ module.exports = (passport) => {
       {
         clientID: client_id,
         clientSecret: client_secret,
-        callbackURL: redirect_uris[0],
+        callbackURL: redirect_uri,
       },
       (token, refreshToken, profile, done) => {
         console.log(

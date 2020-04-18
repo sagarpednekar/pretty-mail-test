@@ -4,23 +4,24 @@ const app = express();
 
 const passport = require("passport");
 
+require("dotenv").config();
+
+const { google } = require("googleapis");
+
 const redis = require("redis");
 
-const client = redis.createClient();
+const client = redis.createClient(require("./config").web.redis);
 
 client.on("error", function (error) {
   console.error("Redis error -->", error);
 });
 
 client.on("connect", (err, res) => {
-  console.log("Connected Successfully");
+  console.log("Redis Instance connected");
 });
 
-const { google } = require("googleapis");
-
-const PORT = 3000;
-
-const { client_id, client_secret, redirect_uris } = require("./config").web;
+const { client_id, client_secret, redirect_uri } = require("./config").web;
+const PORT = process.env.PORT;
 
 const {
   readEmails,
@@ -31,7 +32,7 @@ const {
 
 const { initialize } = require("./jobScheduler");
 
-const { connect } = require("./dbhelper");
+const { connect, db } = require("./dbhelper");
 
 const UserModel = require("./models/user");
 
@@ -45,7 +46,7 @@ const authenticate = (req, res, next) => {
 const oauth2Client = new google.auth.OAuth2(
   client_id,
   client_secret,
-  redirect_uris[0]
+  redirect_uri
 );
 const auth = require("./auth");
 
@@ -57,7 +58,7 @@ auth(passport);
 app.use(passport.initialize());
 app.get("/", (req, res) => {
   res.json({
-    status: "session cookie not set",
+    status: "This is backent Service",
   });
 });
 app.get(
@@ -80,33 +81,40 @@ app.get(
   async (req, res) => {
     try {
       // console.log(JSON.stringify(req.user));
-  
+
       // save token in cache
-  
+
       setKey("access_token", req.user.token);
       setKey("refresh_token", req.user.refresh_token);
-  
+
       oauth2Client.setCredentials({
         access_token: getKey("access_token"),
         refresh_token: getKey("refresh_token"),
       });
-  
+
       setKey("oAuthClient", oauth2Client);
-      
+
       const result = await getUserProfie(req.user.profile.id, oauth2Client);
-  
-      setKey("profile", { ...req.user.profile, email: result && result.emailAddress });
-  
-      const user = await UserModel.create({
-        email: result.emailAddress,
-        name: req.user.profile.displayName,
+
+      setKey("profile", {
+        ...req.user.profile,
+        email: result && result.emailAddress,
       });
-  
+
+      const userData = await UserModel.find({ email: result.emailAddress });
+
+      if(!userData){
+        const user = await UserModel.create({
+          email: result.emailAddress,
+          name: req.user.profile.displayName,
+        });
+      }
+
+
       // redirect to front end url
       res.redirect("/startSync");
-      
     } catch (error) {
-      console.log("Error",error)
+      console.log("Error", error);
     }
   }
 );
@@ -125,37 +133,20 @@ app.get("/emails", authenticate, async (req, res) => {
   });
 });
 
-app.get("/messages", (req, res) => {
-  client.lrange(getKey("profile_id"), 0, -1, (err, result) => {
-    if (err) {
-      return res.send({
-        result: [],
-        error: true,
-      });
-    }
-    res.send({
-      result: JSON.parse(JSON.stringify(result)),
-      //   length: JSON.parse(result).length,
-    });
-  });
-});
+app.get("/messages", async (req, res) => {
+  const results = await UserModel.find({});
 
-app.get("/message/:id", authenticate, async (req, res) => {
-  try {
-    if (!req.params.id) {
-      throw new Error("Message not found with this id " + req.params.id);
-    }
-    const messageId = req.params.id;
-    const response = await getEmail(messageId, getKey("oAuthClient"));
-    res.send({
-      response,
-    });
-  } catch (error) {
-    console.log(error.stack);
-    res.status(404).send({
-      message: "Not found",
-    });
-  }
+  res.send({
+    results,
+  });
+  // client.lrange(getKey("profile_id"), 0, -1, (err, result) => {
+  //   if (err) {
+  //     return res.send({
+  //       result: [],
+  //       error: true,
+  //     });
+  //   }
+  // });
 });
 
 app.get("/startSync", authenticate, (req, res) => {

@@ -27,7 +27,6 @@ const message = mongoose.Schema({
   snippet: String,
   historyId: Number,
   internalDate: Number,
-  payload,
   sizeEstimate: Number,
   raw: String,
 });
@@ -44,5 +43,6 @@ const userSchema = mongoose.Schema({
 });
 
 userSchema.index({ email: 1 }, { unique: true });
+message.index({ id: 1 }, { unique: true });
 
 module.exports = mongoose.model("User", userSchema);

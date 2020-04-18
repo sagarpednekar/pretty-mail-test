@@ -1,13 +1,18 @@
 module.exports = {
   web: {
-    client_id:
-      "395188174859-mmrb1b3ae6shseo9vm0frs2jcj0o4j4s.apps.googleusercontent.com",
-    project_id: "node-email-cms",
-    auth_uri: "https://accounts.google.com/o/oauth2/auth",
-    token_uri: "https://oauth2.googleapis.com/token",
-    auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-    client_secret: "0Zojb9G757CFYKooByEv-Xic",
-    redirect_uris: ["http://localhost:3000/auth/google/callback"],
-    javascript_origins: ["http://localhost:3000"],
+    client_id: process.env.CLIENT_ID,
+    project_id: process.env.PROJECT_ID,
+    auth_uri: process.env.AUTH_URI,
+    token_uri: process.env.TOKEN_URI,
+    auth_provider_x509_cert_url: process.env.AUTH_CERT,
+    client_secret: process.env.CLIENT_SECRET,
+    redirect_uri: process.env.REDIRECT_URI,
+    javascript_origins: process.env.ORIGIN,
+    redis: {
+      host: process.env.REDIS_HOST,
+      port: process.env.REDIS_PORT,
+      password: process.env.REDIS_PASSWORD,
+      url: process.env.REDIS_URI,
+    },
   },
 };
