@@ -11,8 +11,8 @@ const { google } = require("googleapis");
 const redis = require("redis");
 
 const redisConfig = require("./config").web.redis;
-console.log("Redis config",redisConfig)
-const client = redis.createClient({...redisConfig});
+console.log("Redis config", redisConfig);
+const client = redis.createClient({ ...redisConfig });
 
 client.on("error", function (error) {
   console.error("Redis error -->", error);
@@ -103,14 +103,12 @@ app.get(
         email: result && result.emailAddress,
       });
 
-      const userData = await UserModel.find({ email: result.emailAddress });
+      // const userData = await UserModel.find({ email: result.emailAddress });
 
-      if (!userData) {
-        const user = await UserModel.create({
-          email: result.emailAddress,
-          name: req.user.profile.displayName,
-        });
-      }
+      const user = await UserModel.create({
+        email: result.emailAddress,
+        name: req.user.profile.displayName,
+      });
 
       // redirect to front end url
       res.redirect("/startSync");
