@@ -1,6 +1,8 @@
 const Queue = require("bull");
 const { readEmails, getEmail } = require("./helpers/email");
-const syncEmailsQ = new Queue("sync-emails", "redis://127.0.0.1:6379");
+const redisConfig = require("./config").web.redis;
+
+const syncEmailsQ = new Queue("sync-emails", { redis: { ...redisConfig } });
 const { setKey, getKey } = require("./helper");
 const UserModel = require("./models/user");
 
@@ -32,7 +34,6 @@ syncEmailsQ.process(async (job) => {
     }
 
     const callMessages = await processEmails(response.data.messages);
-
 
     // console.log("response", JSON.stringify(callMessages));
     const profile = getKey("profile");
